@@ -3,7 +3,7 @@ package shared
 // Machine represents a machine which reports its IP address
 type Machine struct {
 	Name    string `json:"name"`
-	Token   string `json:"token"`
+	Token   string `json:"token,omitempty"`
 	Address string `json:"address"`
 	Updated int64  `json:"updated"`
 }
