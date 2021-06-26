@@ -9,6 +9,8 @@ require (
 	github.com/jackc/pgproto3/v2 v2.1.0 // indirect
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/johejo/golang-migrate-extra v0.0.0-20210217013041-51a992e50d16
+	github.com/joho/godotenv v1.3.0
+	github.com/rs/zerolog v1.23.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/text v0.3.6 // indirect
 )
