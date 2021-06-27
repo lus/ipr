@@ -11,6 +11,34 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// middlewareMachineAuthorization handles machine token OR auth token authorization
+func (app *App) middlewareMachineAuthorization(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		authHeader := string(ctx.Request.Header.Peek("Authorization"))
+		authHeaderSplit := strings.SplitN(authHeader, " ", 2)
+		if len(authHeaderSplit) != 2 || authHeaderSplit[0] != "Bearer" {
+			ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+			ctx.SetBodyString("unauthorized")
+			return
+		}
+
+		if authHeaderSplit[1] == app.AuthToken {
+			handler(ctx)
+			return
+		}
+
+		machine := ctx.UserValue("_machine").(*shared.Machine)
+		valid, _ := token.Check(machine.Token, authHeaderSplit[1])
+		if !valid {
+			ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+			ctx.SetBodyString("unauthorized")
+			return
+		}
+
+		handler(ctx)
+	}
+}
+
 // middlewareInjectMachine handles machine injection based on the 'name' request parameter
 func (app *App) middlewareInjectMachine(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
@@ -29,6 +57,21 @@ func (app *App) middlewareInjectMachine(handler fasthttp.RequestHandler) fasthtt
 		ctx.SetUserValue("_machine", machine)
 		handler(ctx)
 	}
+}
+
+// endpointReportMachineAddress handles the 'POST /api/v1/machines/{name}/report' endpoint
+func (app *App) endpointReportMachineAddress(ctx *fasthttp.RequestCtx) {
+	machine := ctx.UserValue("_machine").(*shared.Machine)
+	address := string(ctx.Request.Body())
+
+	machine.Address = address
+	machine.Updated = time.Now().Unix()
+
+	if err := app.MachineRepository.Upsert(machine); err != nil {
+		app.error(ctx, -1, err)
+		return
+	}
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
 // endpointGetMachines handles the 'GET /api/v1/machines' endpoint
@@ -85,7 +128,7 @@ func (app *App) endpointCreateMachine(ctx *fasthttp.RequestCtx) {
 
 	// Generate a new machine token
 	tkn := token.Generate()
-	hash, err := tkn.Hash()
+	hash, err := token.Hash(tkn)
 	if err != nil {
 		app.error(ctx, -1, err)
 		return
@@ -105,7 +148,7 @@ func (app *App) endpointCreateMachine(ctx *fasthttp.RequestCtx) {
 
 	// Respond with a JSON representation of the created machine including the raw token
 	copy := *machine
-	copy.Token = tkn.Raw()
+	copy.Token = tkn
 	if err := app.json(ctx, fasthttp.StatusCreated, copy); err != nil {
 		app.error(ctx, -1, err)
 	}

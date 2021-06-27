@@ -8,33 +8,19 @@ import (
 
 var characters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_#+*")
 
-type Token struct {
-	raw  string
-	hash string
+// Generate generates a new machine token
+func Generate() string {
+	return randomString(64)
 }
 
-func Generate() *Token {
-	return &Token{
-		raw: randomString(32),
-	}
+// Hash hashes a machine token
+func Hash(tkn string) (string, error) {
+	return argon2id.CreateHash(tkn, argon2id.DefaultParams)
 }
 
-func (token *Token) Raw() string {
-	return token.raw
-}
-
-func (token *Token) Hash() (string, error) {
-	if token.hash != "" {
-		return token.hash, nil
-	}
-
-	hash, err := argon2id.CreateHash(token.raw, argon2id.DefaultParams)
-	if err != nil {
-		return "", err
-	}
-
-	token.hash = hash
-	return hash, nil
+// Check checks if a given raw string matches a specific machine token
+func Check(hash, raw string) (bool, error) {
+	return argon2id.ComparePasswordAndHash(raw, hash)
 }
 
 func randomString(n int) string {
