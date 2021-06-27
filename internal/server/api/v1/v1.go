@@ -15,4 +15,5 @@ type App struct {
 func (app *App) Route(group *routing.Group) {
 	group.GET("/machines", app.authorized(app.endpointGetMachines))
 	group.POST("/machines", app.authorized(app.endpointCreateMachine))
+	group.DELETE("/machines/{name}", app.authorized(app.middlewareInjectMachine(app.endpointDeleteMachine)))
 }

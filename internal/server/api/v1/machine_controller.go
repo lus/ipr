@@ -11,6 +11,26 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// middlewareInjectMachine handles machine injection based on the 'name' request parameter
+func (app *App) middlewareInjectMachine(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		machineName := ctx.UserValue("name").(string)
+
+		machine, err := app.MachineRepository.Lookup(machineName)
+		if err != nil {
+			app.error(ctx, -1, err)
+			return
+		}
+		if machine == nil {
+			app.error(ctx, fasthttp.StatusNotFound, errors.New("machine not found"))
+			return
+		}
+
+		ctx.SetUserValue("_machine", machine)
+		handler(ctx)
+	}
+}
+
 // endpointGetMachines handles the 'GET /api/v1/machines' endpoint
 func (app *App) endpointGetMachines(ctx *fasthttp.RequestCtx) {
 	// Look up all stored machines
@@ -89,4 +109,15 @@ func (app *App) endpointCreateMachine(ctx *fasthttp.RequestCtx) {
 	if err := app.json(ctx, fasthttp.StatusCreated, copy); err != nil {
 		app.error(ctx, -1, err)
 	}
+}
+
+// endpointDeleteMachine handles the 'DELETE /api/v1/machines/{name}' endpoint
+func (app *App) endpointDeleteMachine(ctx *fasthttp.RequestCtx) {
+	machine := ctx.UserValue("_machine").(*shared.Machine)
+
+	if err := app.MachineRepository.Delete(machine.Name); err != nil {
+		app.error(ctx, -1, err)
+		return
+	}
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }
