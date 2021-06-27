@@ -3,6 +3,7 @@ module github.com/lus/ipr
 go 1.16
 
 require (
+	github.com/alexedwards/argon2id v0.0.0-20210511081203-7d35d68092b8
 	github.com/andybalholm/brotli v1.0.3 // indirect
 	github.com/fasthttp/router v1.4.0
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20201125065321-a53e6fc42574
@@ -16,4 +17,5 @@ require (
 	github.com/rs/zerolog v1.23.0
 	github.com/valyala/fasthttp v1.27.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
 )

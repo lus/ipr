@@ -59,9 +59,9 @@ func (repository *machineRepository) Upsert(machine *shared.Machine) error {
 		INSERT INTO machines (name, token, address, updated)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (name) DO UPDATE
-			SET token = token,
-				address = address,
-				updated = updated
+			SET token = excluded.token,
+				address = excluded.address,
+				updated = excluded.updated
 	`
 
 	_, err := repository.pool.Exec(context.Background(), query, machine.Name, machine.Token, machine.Address, machine.Updated)

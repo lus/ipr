@@ -14,4 +14,5 @@ type App struct {
 // Route routes the v1 API endpoints
 func (app *App) Route(group *routing.Group) {
 	group.GET("/machines", app.authorized(app.endpointGetMachines))
+	group.POST("/machines", app.authorized(app.endpointCreateMachine))
 }
